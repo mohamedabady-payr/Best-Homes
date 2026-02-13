@@ -26,7 +26,7 @@ BEST_HOMES_INSTITUTION_EMAIL=your-institution-email@example.com
 BEST_HOMES_INSTITUTION_PASSWORD=your-institution-password
 ```
 
-The access token is obtained automatically via Payr auth/login and stored in `.payr-token.json` (created at runtime, gitignored).
+The access token is obtained automatically via Payr auth/login and cached in memory (per server process; re-auth on 401 or cold start).
 
 3. Install dependencies and run:
 
@@ -56,4 +56,4 @@ The app runs on **http://localhost:3001**.
 ## Requirements
 
 - `PAYR_API_URL`: Payr API (e.g. https://stage-api.mypayr.co.uk)
-- `BEST_HOMES_INSTITUTION_EMAIL` and `BEST_HOMES_INSTITUTION_PASSWORD`: Institution credentials; token is fetched on 401 and stored in `.payr-token.json`
+- `BEST_HOMES_INSTITUTION_EMAIL` and `BEST_HOMES_INSTITUTION_PASSWORD`: Institution credentials; token is fetched on 401 or cold start and cached in memory
