@@ -1,0 +1,78 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/AuthContext";
+import { Button } from "@/components/atoms/Button";
+
+export default function LoginPage() {
+  const router = useRouter();
+  const { login } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    const result = login({ email, password });
+    setLoading(false);
+    if (result.ok) {
+      router.push("/");
+    } else {
+      setError(result.error ?? "Login failed");
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
+      <div className="w-full max-w-md">
+        <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+          <h1 className="text-2xl font-bold text-slate-900">Sign in</h1>
+          <p className="mt-1 text-sm text-slate-600">
+            Sign in to manage your rent payments with Best Homes.
+          </p>
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            {error && (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                {error}
+              </div>
+            )}
+            <label className="flex flex-col gap-1">
+              <span className="text-sm font-medium text-slate-700">Email</span>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-sm font-medium text-slate-700">Password</span>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
+              />
+            </label>
+            <Button type="submit" disabled={loading} fullWidth>
+              {loading ? "Signing in..." : "Sign in"}
+            </Button>
+          </form>
+          <p className="mt-6 text-center text-sm text-slate-600">
+            Don&apos;t have an account?{" "}
+            <Link href="/register" className="font-medium text-slate-900 hover:underline">
+              Register
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

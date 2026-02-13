@@ -28,6 +28,9 @@ yarn-error.log*
 # local env files
 .env*.local
 
+# Payr institution token (generated at runtime)
+.payr-token.json
+
 # vercel
 .vercel
 

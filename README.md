@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Best Homes - Third-Party Integration Testing App
 
-## Getting Started
+A standalone Next.js app that simulates a student housing platform for testing the Payr third-party integration flow.
 
-First, run the development server:
+## Features
+
+- **Home page**: Rent payment schedule with installments (pending/paid status)
+- **Checkout page**: "Pay with Payr" button that opens the Payr payment flow in a modal iframe
+- **Feedback page**: Success/failure view after payment completion
+- **Profile page**: Complete your profile (personal and tenant details) before paying with Payr
+- **Server API**: Payr onboarding (`/api/payr-onboarding`) - onboard user to Payr and returns token/session_id for embedding
+
+## Setup
+
+1. Copy the env example and add your credentials:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Edit `.env.local` with your Best Homes institution Payr credentials:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+PAYR_API_URL=https://stage-api.mypayr.co.uk
+BEST_HOMES_INSTITUTION_EMAIL=your-institution-email@example.com
+BEST_HOMES_INSTITUTION_PASSWORD=your-institution-password
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The access token is obtained automatically via Payr auth/login and stored in `.payr-token.json` (created at runtime, gitignored).
 
-## Learn More
+3. Install dependencies and run:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+pnpm install
+pnpm dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The app runs on **http://localhost:3001**.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Testing Flow
 
-## Deploy on Vercel
+1. Open Best Homes at http://localhost:3001
+2. Go to Profile and complete your profile (personal and tenant details)
+3. View the rent schedule on the home page
+4. Click "Pay Rent" or go to Checkout
+5. Click "Pay with Payr" (requires profile to be completed) - modal opens with Payr third-party page in iframe
+6. Complete payment on Payr (card or APM)
+7. Modal closes automatically, redirects to success/failure feedback
+8. Click "Back to Schedule" - first pending installment shows as paid
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Architecture
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Atomic design**: components in `atoms/`, `molecules/`, `organisms/`, `templates/`
+- **API routes**: Next.js App Router API routes for Payr onboarding and mock schedule data
+
+## Requirements
+
+- `PAYR_API_URL`: Payr API (e.g. https://stage-api.mypayr.co.uk)
+- `BEST_HOMES_INSTITUTION_EMAIL` and `BEST_HOMES_INSTITUTION_PASSWORD`: Institution credentials; token is fetched on 401 and stored in `.payr-token.json`
