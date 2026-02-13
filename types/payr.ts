@@ -25,7 +25,7 @@ export interface PayrKyc {
 }
 
 export interface PayrOnboardingPayload {
-  student_id: number;
+  user_id: number;
   email: string;
   first_name: string;
   last_name: string;
@@ -36,6 +36,6 @@ export interface PayrOnboardingPayload {
   installments: unknown[];
 }
 
-export type PayrProfileInput = Omit<PayrOnboardingPayload, "student_id"> & {
-  student_id?: never;
+export type PayrProfileInput = Omit<PayrOnboardingPayload, "user_id"> & {
+  user_id?: never;
 };
