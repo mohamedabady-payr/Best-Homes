@@ -20,10 +20,15 @@ export function formatAmountsInPayload<T>(obj: T): T {
   if (typeof obj === "object") {
     const result = {} as Record<string, unknown>;
     for (const [key, value] of Object.entries(obj)) {
-      result[key] =
-        key === "amount"
-          ? formatAmountToTwoDecimals(value as string | number)
-          : formatAmountsInPayload(value);
+      if (key === "amount") {
+        const v = value as string | number;
+        result[key] =
+          typeof v === "number" && Number.isInteger(v)
+            ? v
+            : formatAmountToTwoDecimals(v);
+      } else {
+        result[key] = formatAmountsInPayload(value);
+      }
     }
     return result as T;
   }

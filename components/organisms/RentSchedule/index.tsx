@@ -7,13 +7,22 @@ import type { ScheduleResponse } from "@/types/schedule";
 
 export interface RentScheduleProps {
   schedule: ScheduleResponse;
+  showGenerateButton?: boolean;
+  onGenerateInstallments?: () => void;
+  isGenerating?: boolean;
 }
 
-export function RentSchedule({ schedule }: RentScheduleProps) {
+export function RentSchedule({
+  schedule,
+  showGenerateButton = false,
+  onGenerateInstallments,
+  isGenerating = false,
+}: RentScheduleProps) {
   const pendingInstallments = schedule.installments.filter(
     (i) => i.status === "pending"
   );
   const hasPending = pendingInstallments.length > 0;
+  const hasNoInstallments = schedule.installments.length === 0;
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -30,6 +39,17 @@ export function RentSchedule({ schedule }: RentScheduleProps) {
           <InstallmentRow key={installment.id} installment={installment} />
         ))}
       </div>
+      {showGenerateButton && hasNoInstallments && onGenerateInstallments && (
+        <div className="border-t border-slate-200 px-6 py-4">
+          <Button
+            fullWidth
+            onClick={onGenerateInstallments}
+            disabled={isGenerating}
+          >
+            {isGenerating ? "Generating..." : "Generate installments"}
+          </Button>
+        </div>
+      )}
       {hasPending && (
         <div className="border-t border-slate-200 px-6 py-4">
           <Link href="/checkout">

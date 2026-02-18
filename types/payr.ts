@@ -24,6 +24,12 @@ export interface PayrKyc {
   status: string;
 }
 
+export interface PayrInstallment {
+  installment_number: number;
+  due_date: string;
+  amount: number;
+}
+
 export interface PayrOnboardingPayload {
   user_id: number;
   email: string;
@@ -33,7 +39,7 @@ export interface PayrOnboardingPayload {
   date_of_birth: string;
   tenant: PayrTenant[];
   kyc: PayrKyc;
-  installments: unknown[];
+  installments: PayrInstallment[];
 }
 
 export type PayrProfileInput = Omit<PayrOnboardingPayload, "user_id"> & {

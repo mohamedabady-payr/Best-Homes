@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { PageLayout } from "@/components/templates/PageLayout";
 import { ProfileWarningCard } from "@/components/molecules/ProfileWarningCard";
 import { RentSchedule } from "@/components/organisms/RentSchedule";
 import { useAuth } from "@/lib/AuthContext";
 import { getProfile } from "@/lib/profileStorage";
+import { getSchedule, setSchedule, getTenancyId } from "@/lib/scheduleStorage";
+import { generateInstallments } from "@/lib/generateInstallments";
 import type { ScheduleResponse } from "@/types/schedule";
 
 function isProfileComplete(profile: ReturnType<typeof getProfile>): boolean {
@@ -28,17 +30,22 @@ function isProfileComplete(profile: ReturnType<typeof getProfile>): boolean {
 
 export default function HomePage() {
   const { user } = useAuth();
-  const [schedule, setSchedule] = useState<ScheduleResponse | null>(null);
+  const [schedule, setScheduleState] = useState<ScheduleResponse | null>(null);
   const [profile, setProfileState] = useState<ReturnType<typeof getProfile>>(null);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
-    fetch("/api/schedule")
-      .then((res) => res.json())
-      .then((data) => setSchedule(data))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+    if (!user?.email) {
+      setLoading(false);
+      return;
+    }
+    const stored = getSchedule(user.email);
+    setScheduleState(
+      stored ?? { tenancy_id: getTenancyId(user.email), installments: [] }
+    );
+    setLoading(false);
+  }, [user?.email]);
 
   useEffect(() => {
     if (user?.email) {
@@ -46,7 +53,34 @@ export default function HomePage() {
     }
   }, [user?.email]);
 
+  const handleGenerateInstallments = useCallback(() => {
+    if (!user?.email || !profile) return;
+    setGenerating(true);
+    try {
+      const tenant = profile.tenant?.[0];
+      const { installments, propertyName } = generateInstallments(tenant);
+      const totalRent =
+        installments.length > 0
+          ? installments.reduce((sum, i) => sum + parseFloat(i.amount || "0"), 0)
+          : undefined;
+      const newSchedule: ScheduleResponse = {
+        tenancy_id: getTenancyId(user.email),
+        property_name: propertyName,
+        total_rent: totalRent,
+        installments,
+      };
+      setSchedule(user.email, newSchedule);
+      setScheduleState(newSchedule);
+    } catch (err) {
+      console.error("Generate installments error:", err);
+    } finally {
+      setGenerating(false);
+    }
+  }, [user?.email, profile]);
+
   const showProfileWarning = !isProfileComplete(profile);
+  const hasNoInstallments = !!(schedule && schedule.installments.length === 0);
+  const showGenerateButton = !showProfileWarning && hasNoInstallments;
 
   return (
     <PageLayout>
@@ -60,7 +94,12 @@ export default function HomePage() {
             <p className="text-slate-500">Loading schedule...</p>
           </div>
         ) : schedule ? (
-          <RentSchedule schedule={schedule} />
+          <RentSchedule
+            schedule={schedule}
+            showGenerateButton={showGenerateButton}
+            onGenerateInstallments={handleGenerateInstallments}
+            isGenerating={generating}
+          />
         ) : (
           <div className="rounded-xl border border-slate-200 bg-white p-12 text-center">
             <p className="text-slate-500">Failed to load schedule</p>

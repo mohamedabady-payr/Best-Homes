@@ -7,7 +7,7 @@ import { CheckoutSummary } from "@/components/organisms/CheckoutSummary";
 import { PayrModal } from "@/components/organisms/PayrModal";
 import { useAuth } from "@/lib/AuthContext";
 import { getProfile, markOnboarded } from "@/lib/profileStorage";
-import { fetchOnce, invalidateFetch } from "@/lib/fetchOnce";
+import { getSchedule, getTenancyId, markFirstPendingPaid } from "@/lib/scheduleStorage";
 import { formatAmountToTwoDecimals } from "@/lib/utils";
 import type { PayrOnboardingPayload } from "@/types/payr";
 import type { ScheduleResponse } from "@/types/schedule";
@@ -42,25 +42,14 @@ export default function CheckoutPage() {
 
   const hasProfile = isProfileComplete(profile);
 
-  const fetchSchedule = (markPaid = false) => {
-    const url = markPaid
-      ? "/api/schedule?mark_first_pending_paid=true"
-      : "/api/schedule";
-    return fetch(url).then((res) => res.json()) as Promise<ScheduleResponse>;
-  };
-
   useEffect(() => {
     if (!user?.email) return;
-    fetchOnce("checkout-schedule", () =>
-      fetch("/api/schedule").then((res) => res.json()) as Promise<ScheduleResponse>
-    )
-      .then((scheduleData) => {
-        setSchedule(scheduleData);
-        setProfileState(getProfile(user.email));
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-    return () => void setTimeout(() => invalidateFetch("checkout-schedule"), 100);
+    const stored = getSchedule(user.email);
+    setSchedule(
+      stored ?? { tenancy_id: getTenancyId(user.email), installments: [] }
+    );
+    setProfileState(getProfile(user.email));
+    setLoading(false);
   }, [user?.email]);
 
   const handlePayWithPayr = async () => {
@@ -71,11 +60,18 @@ export default function CheckoutPage() {
         ...t,
         amount: formatAmountToTwoDecimals(t.amount),
       })) ?? [];
+      const installments =
+        schedule?.installments?.map((i) => ({
+          installment_number: i.installment_number,
+          due_date: i.due_date,
+          amount: Math.round(parseFloat(i.amount || "0") * 100),
+        })) ?? [];
       const { student_id: _legacy, ...profileRest } = profile as typeof profile & { student_id?: number };
       const payload: PayrOnboardingPayload = {
         ...profileRest,
         user_id: profile.user_id ?? _legacy ?? Math.floor(100000000000 + Math.random() * 900000000000),
         tenant: tenantWithFormattedAmount,
+        installments,
       };
       const res = await fetch("/api/payr-onboarding", {
         method: "POST",
@@ -117,12 +113,14 @@ export default function CheckoutPage() {
   const handlePaymentComplete = (isSuccess: boolean) => {
     setModalOpen(false);
     setIframeSrc(null);
-    fetchSchedule(true).then((data) => {
-      setSchedule(data);
-      router.push(
-        `/checkout/feedback?success=${isSuccess ? "true" : "false"}`
-      );
-    });
+    if (user?.email && isSuccess) {
+      markFirstPendingPaid(user.email);
+      const updated = getSchedule(user.email);
+      if (updated) setSchedule(updated);
+    }
+    router.push(
+      `/checkout/feedback?success=${isSuccess ? "true" : "false"}`
+    );
   };
 
   const handleModalClose = () => {
