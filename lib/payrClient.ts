@@ -1,49 +1,20 @@
 import type { PayrOnboardingPayload } from "@/types/payr";
-import { getToken, setToken } from "./payrTokenStore";
 
 const PAYR_API_URL = process.env.PAYR_API_URL || "https://stage-api.mypayr.co.uk";
+
+const PAYR_INSTITUTION_TOKEN =
+  process.env.PAYR_INSTITUTION_TOKEN ||
+  "98c6a4aef960545415ff6d499f0b008508c820bee807c2d79e6d83d09cb79b4d";
 
 export interface PayrUserLoginResponse {
   url: string;
 }
 
-async function payrAuthLogin(): Promise<string> {
-  const email = process.env.BEST_HOMES_INSTITUTION_EMAIL;
-  const password = process.env.BEST_HOMES_INSTITUTION_PASSWORD;
-  if (!email || !password) {
-    throw new Error("BEST_HOMES_INSTITUTION_EMAIL and BEST_HOMES_INSTITUTION_PASSWORD must be configured");
+function getToken(): string {
+  if (!PAYR_INSTITUTION_TOKEN) {
+    throw new Error("PAYR_INSTITUTION_TOKEN must be configured");
   }
-
-  const payload = { email, password };
-  console.log("[payr] POST /auth/login/ request:", { ...payload, password: "***" });
-
-  const res = await fetch(`${PAYR_API_URL}/auth/login/`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  const resText = await res.text();
-  if (!res.ok) {
-    console.log("[payr] POST /auth/login/ response:", res.status, resText);
-    throw new Error(`Payr auth login failed: ${res.status} ${resText}`);
-  }
-
-  const data = JSON.parse(resText) as { token?: string };
-  console.log("[payr] POST /auth/login/ response:", res.status, { token: data?.token ? `${data.token.slice(0, 8)}...` : data });
-  if (!data?.token) {
-    throw new Error("No token received from Payr auth login");
-  }
-  return data.token;
-}
-
-async function getOrRefreshToken(): Promise<string> {
-  let token = getToken();
-  if (!token) {
-    token = await payrAuthLogin();
-    setToken(token);
-  }
-  return token;
+  return PAYR_INSTITUTION_TOKEN;
 }
 
 async function fetchWithTokenRetry<T>(
@@ -51,24 +22,16 @@ async function fetchWithTokenRetry<T>(
   options: RequestInit & { body?: string },
   parseResponse: (res: Response) => Promise<T>
 ): Promise<T> {
-  let token = await getOrRefreshToken();
+  const token = getToken();
 
-  const doFetch = (authToken: string) =>
-    fetch(url, {
-      ...options,
-      headers: {
-        ...options.headers,
-        "Content-Type": "application/json",
-        Authorization: `Token ${authToken}`,
-      },
-    });
-
-  let res = await doFetch(token);
-  if (res.status === 401) {
-    token = await payrAuthLogin();
-    setToken(token);
-    res = await doFetch(token);
-  }
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      ...options.headers,
+      "Content-Type": "application/json",
+      Authorization: `Token ${token}`,
+    },
+  });
 
   if (!res.ok) {
     const err = await res.text();
