@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     if (!profile?.email) {
       return NextResponse.json(
         { error: "Profile required. Please complete your profile first." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -25,8 +25,7 @@ export async function POST(request: NextRequest) {
       await payrOnboarding(normalizedProfile);
     }
 
-    const userResponse = await payrUserLogin('duha.londonist+795655@gmail.com');
-    // const userResponse = await payrUserLogin(normalizedProfile.email);
+    const userResponse = await payrUserLogin(normalizedProfile.email);
 
     return NextResponse.json({ url: userResponse.url });
   } catch (error) {
