@@ -73,6 +73,7 @@ export function PayrModal({
           <iframe
             src={iframeSrc}
             title="Pay with Payr"
+            allow="payment *"
             className="h-full w-full border-0"
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
           />

@@ -70,6 +70,7 @@ export default function CheckoutPage() {
       const payload: PayrOnboardingPayload = {
         ...profileRest,
         user_id: profile.user_id ?? _legacy ?? Math.floor(100000000000 + Math.random() * 900000000000),
+        agent_id: profile.agent_id ?? Math.floor(100000000000 + Math.random() * 900000000000),
         tenant: tenantWithFormattedAmount,
         installments,
       };

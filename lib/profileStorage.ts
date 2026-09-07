@@ -4,8 +4,9 @@ import type { PayrProfileInput } from "@/types/payr";
 
 const PROFILES_KEY = "best_homes_profiles";
 
-export interface StoredProfile extends Omit<PayrProfileInput, "user_id"> {
+export interface StoredProfile extends Omit<PayrProfileInput, "user_id" | "agent_id"> {
   user_id?: number;
+  agent_id?: number;
   isOnboardedToPayr?: boolean;
 }
 
@@ -34,11 +35,13 @@ export function setProfile(email: string, profile: PayrProfileInput): StoredProf
   const profiles = getProfiles();
   const key = email.trim().toLowerCase();
   const existing = profiles[key];
-  const existingProfile = existing as { user_id?: number; student_id?: number } | undefined;
+  const existingProfile = existing as { user_id?: number; student_id?: number; agent_id?: number } | undefined;
   const userId = existingProfile?.user_id ?? existingProfile?.student_id ?? Math.floor(100000000000 + Math.random() * 900000000000);
+  const agentId = existingProfile?.agent_id ?? Math.floor(100000000000 + Math.random() * 900000000000);
   const payload: StoredProfile = {
     ...profile,
     user_id: userId,
+    agent_id: agentId,
     isOnboardedToPayr: existing?.isOnboardedToPayr ?? false,
   };
   profiles[key] = payload;

@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: userResponse.url });
   } catch (error) {
+    console.error("[payr-onboarding] Error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }

@@ -23,7 +23,7 @@ async function fetchWithTokenRetry<T>(
   parseResponse: (res: Response) => Promise<T>
 ): Promise<T> {
   const token = getToken();
-
+console.log("Authorization", `Token ${token}`,)
   const res = await fetch(url, {
     ...options,
     headers: {

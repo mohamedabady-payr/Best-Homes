@@ -32,6 +32,7 @@ export interface PayrInstallment {
 
 export interface PayrOnboardingPayload {
   user_id: number;
+  agent_id: number;
   email: string;
   first_name: string;
   last_name: string;
@@ -42,6 +43,7 @@ export interface PayrOnboardingPayload {
   installments: PayrInstallment[];
 }
 
-export type PayrProfileInput = Omit<PayrOnboardingPayload, "user_id"> & {
+export type PayrProfileInput = Omit<PayrOnboardingPayload, "user_id" | "agent_id"> & {
   user_id?: never;
+  agent_id?: never;
 };
