@@ -40,7 +40,7 @@ export interface PayrOnboardingPayload {
   date_of_birth: string;
   tenant: PayrTenant[];
   kyc: PayrKyc;
-  installments: PayrInstallment[];
+  installments?: PayrInstallment[];
 }
 
 export type PayrProfileInput = Omit<PayrOnboardingPayload, "user_id" | "agent_id"> & {

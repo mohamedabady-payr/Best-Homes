@@ -39,6 +39,7 @@ export default function CheckoutPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [payrLoading, setPayrLoading] = useState(false);
   const [iframeSrc, setIframeSrc] = useState<string | null>(null);
+  const [includeInstallments, setIncludeInstallments] = useState(true);
 
   const hasProfile = isProfileComplete(profile);
 
@@ -72,7 +73,7 @@ export default function CheckoutPage() {
         user_id: profile.user_id ?? _legacy ?? Math.floor(100000000000 + Math.random() * 900000000000),
         agent_id: profile.agent_id ?? Math.floor(100000000000 + Math.random() * 900000000000),
         tenant: tenantWithFormattedAmount,
-        installments,
+        ...(includeInstallments ? { installments } : {}),
       };
       const res = await fetch("/api/payr-onboarding", {
         method: "POST",
@@ -153,6 +154,15 @@ export default function CheckoutPage() {
     <PageLayout>
       <div className="space-y-6">
         <h1 className="text-2xl font-bold text-slate-900">Checkout</h1>
+        <label className="flex items-center gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={includeInstallments}
+            onChange={(e) => setIncludeInstallments(e.target.checked)}
+            className="h-4 w-4 rounded border-slate-300"
+          />
+          Include installments in onboarding request
+        </label>
         <CheckoutSummary
           schedule={schedule}
           onPayWithPayr={handlePayWithPayr}
